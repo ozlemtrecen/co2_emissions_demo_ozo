@@ -45,6 +45,7 @@ Load in your dataset from gapminder below. View it in your data viewer to get an
 ```{python}
 # Load the data
 emissions = pd.read_csv("data/co2_cons.csv")
+emissions
 ```
 
 # Initial Cleaning
@@ -92,7 +93,9 @@ table_df
 table_df["Relative Change"] = (table_df["Absolute Change"] / table_df['2000']) * 100
 table_df
 # Round to 0 decimal places, and add a % sign to the relative change
-table_df["Relative Change"] = table_df["Relative Change"].round(0).astype(str) + "%"
+table_df["Relative Change"] = table_df["Relative Change"].round(0).astype(str) 
+
+table_df
 ```
 
 Now we can display this as an interactive table with itables:
@@ -111,6 +114,61 @@ Our goal is to create a line chart from 1990 to 2022 for a few selected countrie
 4. Create a line chart showing emissions over time for the selected countries with Plotly Express.
 
 ```{python}
+show(emissions)
+emissions
+```
+
+```{python}
+# melt
+emissions_long = table_df.melt(id_vars=['country'], var_name='year', value_name='emissions')
+
+# to numeric
+emissions_long["year"] = pd.to_numeric(emissions_long['year'], errors='coerce')
+
+show(emissions_long)
+```
+
+```{python}
+# Convert emissions to numeric, handling dashes
+emissions_long["emissions"] = pd.to_numeric(emissions_long["emissions"].astype(str).str.replace(r"[^\d.-]", "", regex=True))
+
+show(emissions_long)
+
+emissions_long["country"].value_counts()
+```
+
+```{python}
+# Filter for years between 1990 and 2022
+emissions_long_1990_2022 = emissions_long.query("1990 <= year <= 2022")
+
+emissions_long_1990_2022 
+#emissions_long_1990_2022["country"].value_counts()
+```
+```{python}
+# Filter for specific countries
+emissions_long_subset = emissions_long_1990_2022.query("country.isin(['Afghanistan', 'Qatar', 'Malaysia', 'Namibia', 'Niger'])")
+
+emissions_long_subset
+```
+```{python}
+# Sort for better visualization
+emissions_long_subset = emissions_long_subset.sort_values(by=['country', 'year'])
+emissions_long_subset
+```
+
+```{python}
+# Create line chart with markers
+fig_chart = px.line(emissions_long_subset, x='year', y='emissions', color='country', 
+                    title='Changes in the CO2 emissions by country with year', markers=True)
+
+# Set y-axis range
+fig_chart.update_yaxes(range=[0, 300])
+
+# Show figure
+fig_chart.show()
+
+```
+```{python}
 # Melt the original `emissions` dataset. Your id_vars should be "country", your var_name should be "year" and your value_name should be "emissions".
 emissions_long = table_df.melt(id_vars=['country'], var_name='year', value_name='emissions').sort_values(by=['country', 'year'])
 emissions_long
@@ -128,10 +186,10 @@ emissions_long_1990_2022 = emissions_long.query("1990 <= year <= 2022")
 emissions_long_subset = emissions_long.query("country.isin(['Afghanistan', 'Albania', 'Algeria', 'Andorra','Angola'])")
 emissions_long_subset 
 # Create line chart. Year should be on the x-axis, emissions on the y-axis, and color should be by country.
-fig_chart = px.line(emissions_long_subset, x='year', y='emissions', color='country', title='Changes in the CO2 emissions<br>by country with year')
-fig_chart.update_yaxes(range=[0, 200])  # Set y-axis range from 0 to 500
+#fig_chart = px.line(emissions_long_subset, x='year', y='emissions', color='country', title='Changes in the CO2 emissions<br>by country with year',markers=True)
+#fig_chart.update_yaxes(range=[0, 200])  # Set y-axis range from 0 to 500
 
-fig_chart.show()
+#fig_chart.show()
 ```
 
 
